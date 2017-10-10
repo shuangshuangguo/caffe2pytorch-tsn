@@ -9,3 +9,5 @@ finally we transfer torch model to pytorch model in python.
 To be honest, this script is so complicated. I'm looking forward to see yjxiong's transferring work.
 
 You also need to modify test_videos.py because of the problem of state_dict, please see details in test_videos.py
+
+reference: https://github.com/kmatzen/googlenet-caffe2torch
