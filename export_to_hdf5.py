@@ -1,5 +1,5 @@
 import sys
-sys.path.append('/home/gss/Code/Action_Recognition/temporal-segment-networks/lib/caffe-action')
+sys.path.append('/path/temporal-segment-networks/lib/caffe-action')
 from caffe.proto import caffe_pb2
 
 import numpy as np
@@ -11,7 +11,7 @@ parser.add_argument("--model", type=str, help='caffemodel need to transfer')
 parser.add_argument("--hdf5", type=str, help='hdf5 file')
 args = parser.parse_args()
 
-dirs = '/home/gss/Code/Action_Recognition/temporal-segment-networks/models/'
+dirs = '/path/temporal-segment-networks/models/'
 files =dirs + args.model
 net_param = caffe_pb2.NetParameter()
 with open(files, 'r') as f:
