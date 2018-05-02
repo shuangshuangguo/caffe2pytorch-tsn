@@ -3,13 +3,14 @@ require 'inn'
 require 'hdf5'
 require 'nn'
 function InceptionModule(name, inplane, outplane_a1x1, outplane_b3x3_reduce, outplane_b3x3, outplanedouble_3x3_reduce, outplanedouble_3x3_1, outplanedouble_3x3_2, outplane_pool_proj)
-  local a = nn.Sequential()
-  local a1x1 = nn.SpatialConvolution(inplane, outplane_a1x1, 1, 1, 1, 1, 0, 0)
-  a1x1.name = name .. '/1x1'
-  bn1x1 = nn.SpatialBatchNormalization(outplane_a1x1)
-  bn1x1.name = name .. '/1x1_bn'
-  a:add(a1x1):add(bn1x1)
-  a:add(nn.ReLU(true))
+  if type(outplane_a1x1) == int:
+    local a = nn.Sequential()
+    local a1x1 = nn.SpatialConvolution(inplane, outplane_a1x1, 1, 1, 1, 1, 0, 0)
+    a1x1.name = name .. '/1x1'
+    bn1x1 = nn.SpatialBatchNormalization(outplane_a1x1)
+    bn1x1.name = name .. '/1x1_bn'
+    a:add(a1x1):add(bn1x1)
+    a:add(nn.ReLU(true))
 
   local b = nn.Sequential()
   local b3x3_reduce = nn.SpatialConvolution(inplane, outplane_b3x3_reduce, 1, 1, 1, 1, 0, 0)
@@ -46,112 +47,26 @@ function InceptionModule(name, inplane, outplane_a1x1, outplane_b3x3_reduce, out
   c:add(double_3x3_2):add(bndouble_3x3_2)
   c:add(nn.ReLU(true))
 
+
   local d = nn.Sequential()
-  d:add(nn.SpatialAveragePooling(3, 3, 1, 1, 1, 1))
-  local d_pool_proj = nn.SpatialConvolution(inplane, outplane_pool_proj, 1, 1, 1, 1, 0, 0)
-  d_pool_proj.name = name .. '/pool_proj'
-  bnd_pool_proj = nn.SpatialBatchNormalization(outplane_pool_proj)
-  bnd_pool_proj.name = name .. '/pool_proj_bn'
-  d:add(d_pool_proj):add(bnd_pool_proj)
-  d:add(nn.ReLU(true))
+  if name == 'inception_4e' or 'inception_3c':
+    d:add(nn.SpatialMaxPooling(3, 3, 2, 2))
+  else:
+    if name == 'inception_5b':
+      d:add(nn.SpatialMaxPooling(3, 3, 1, 1, 1, 1))
+    else:
+      d:add(nn.SpatialAveragePooling(3, 3, 1, 1, 1, 1))
+    local d_pool_proj = nn.SpatialConvolution(inplane, outplane_pool_proj, 1, 1, 1, 1, 0, 0)
+    d_pool_proj.name = name .. '/pool_proj'
+    bnd_pool_proj = nn.SpatialBatchNormalization(outplane_pool_proj)
+    bnd_pool_proj.name = name .. '/pool_proj_bn'
+    d:add(d_pool_proj):add(bnd_pool_proj)
+    d:add(nn.ReLU(true))
 
-  local module = nn.Sequential():add(nn.ConcatTable():add(a):add(b):add(c):add(d)):add(nn.JoinTable(2))
-  return module
-end
-
-function InceptionModule1(name, inplane, outplane_b3x3_reduce, outplane_b3x3, outplanedouble_3x3_reduce, outplanedouble_3x3_1, outplanedouble_3x3_2)
-  local b = nn.Sequential()
-  local b3x3_reduce = nn.SpatialConvolution(inplane, outplane_b3x3_reduce, 1, 1, 1, 1, 0, 0)
-  b3x3_reduce.name = name .. '/3x3_reduce'
-  bn3x3_reduce = nn.SpatialBatchNormalization(outplane_b3x3_reduce)
-  bn3x3_reduce.name = name .. '/3x3_reduce_bn'
-  b:add(b3x3_reduce):add(bn3x3_reduce)
-  b:add(nn.ReLU(true))
-  local b3x3 = nn.SpatialConvolution(outplane_b3x3_reduce, outplane_b3x3, 3, 3, 1, 1, 1, 1)
-  b3x3.name = name .. '/3x3'
-  bn3x3 = nn.SpatialBatchNormalization(outplane_b3x3)
-  bn3x3.name = name .. '/3x3_bn'
-  b:add(b3x3):add(bn3x3)
-  b:add(nn.ReLU(true))
-
-  local c = nn.Sequential()
-  local double_3x3_reduce = nn.SpatialConvolution(inplane, outplanedouble_3x3_reduce, 1, 1, 1, 1, 0, 0)
-  double_3x3_reduce.name = name .. '/double_3x3_reduce'
-  bndouble_3x3_reduce = nn.SpatialBatchNormalization(outplanedouble_3x3_reduce)
-  bndouble_3x3_reduce.name = name .. '/double_3x3_reduce_bn'
-  c:add(double_3x3_reduce):add(bndouble_3x3_reduce)
-  c:add(nn.ReLU(true))
-  local double_3x3_1 = nn.SpatialConvolution(outplanedouble_3x3_reduce, outplanedouble_3x3_1, 3, 3, 1, 1, 1, 1)
-  double_3x3_1.name = name .. '/double_3x3_1'
-  bndouble_3x3_1 = nn.SpatialBatchNormalization(outplanedouble_3x3_1)
-  bndouble_3x3_1.name = name .. '/double_3x3_1_bn'
-  c:add(double_3x3_1):add(bndouble_3x3_1)
-  c:add(nn.ReLU(true))
-  local double_3x3_2 = nn.SpatialConvolution(outplanedouble_3x3_1, outplanedouble_3x3_2, 3, 3, 1, 1, 1, 1)
-  double_3x3_2.name = name .. '/double_3x3_2'
-  bndouble_3x3_2 = nn.SpatialBatchNormalization(outplanedouble_3x3_2)
-  bndouble_3x3_2.name = name .. '/double_3x3_2_bn'
-  c:add(double_3x3_2):add(bndouble_3x3_2)
-  c:add(nn.ReLU(true))
-  local d = nn.Sequential()
-  d:add(nn.SpatialMaxPooling(3, 3, 2, 2))
-
-  local module1 = nn.Sequential():add(nn.ConcatTable():add(b):add(c):add(d)):add(nn.JoinTable(2))
-  return module1
-end
-
-function InceptionModule2(name, inplane, outplane_a1x1, outplane_b3x3_reduce, outplane_b3x3, outplanedouble_3x3_reduce, outplanedouble_3x3_1, outplanedouble_3x3_2, outplane_pool_proj)
-  local a = nn.Sequential()
-  local a1x1 = nn.SpatialConvolution(inplane, outplane_a1x1, 1, 1, 1, 1, 0, 0)
-  a1x1.name = name .. '/1x1'
-  bn1x1 = nn.SpatialBatchNormalization(outplane_a1x1)
-  bn1x1.name = name .. '/1x1_bn'
-  a:add(a1x1):add(bn1x1)
-  a:add(nn.ReLU(true))
-
-  local b = nn.Sequential()
-  local b3x3_reduce = nn.SpatialConvolution(inplane, outplane_b3x3_reduce, 1, 1, 1, 1, 0, 0)
-  b3x3_reduce.name = name .. '/3x3_reduce'
-  bn3x3_reduce = nn.SpatialBatchNormalization(outplane_b3x3_reduce)
-  bn3x3_reduce.name = name .. '/3x3_reduce_bn'
-  b:add(b3x3_reduce):add(bn3x3_reduce)
-  b:add(nn.ReLU(true))
-  local b3x3 = nn.SpatialConvolution(outplane_b3x3_reduce, outplane_b3x3, 3, 3, 1, 1, 1, 1)
-  b3x3.name = name .. '/3x3'
-  bn3x3 = nn.SpatialBatchNormalization(outplane_b3x3)
-  bn3x3.name = name .. '/3x3_bn'
-  b:add(b3x3):add(bn3x3)
-  b:add(nn.ReLU(true))
-
-  local c = nn.Sequential()
-  local double_3x3_reduce = nn.SpatialConvolution(inplane, outplanedouble_3x3_reduce, 1, 1, 1, 1, 0, 0)
-  double_3x3_reduce.name = name .. '/double_3x3_reduce'
-  bndouble_3x3_reduce = nn.SpatialBatchNormalization(outplanedouble_3x3_reduce)
-  bndouble_3x3_reduce.name = name .. '/double_3x3_reduce_bn'
-  c:add(double_3x3_reduce):add(bndouble_3x3_reduce)
-  c:add(nn.ReLU(true))
-  local double_3x3_1 = nn.SpatialConvolution(outplanedouble_3x3_reduce, outplanedouble_3x3_1, 3, 3, 1, 1, 1, 1)
-  double_3x3_1.name = name .. '/double_3x3_1'
-  bndouble_3x3_1 = nn.SpatialBatchNormalization(outplanedouble_3x3_1)
-  bndouble_3x3_1.name = name .. '/double_3x3_1_bn'
-  c:add(double_3x3_1):add(bndouble_3x3_1)
-  c:add(nn.ReLU(true))
-  local double_3x3_2 = nn.SpatialConvolution(outplanedouble_3x3_1, outplanedouble_3x3_2, 3, 3, 1, 1, 1, 1)
-  double_3x3_2.name = name .. '/double_3x3_2'
-  bndouble_3x3_2 = nn.SpatialBatchNormalization(outplanedouble_3x3_2)
-  bndouble_3x3_2.name = name .. '/double_3x3_2_bn'
-  c:add(double_3x3_2):add(bndouble_3x3_2)
-  c:add(nn.ReLU(true))
-  local d = nn.Sequential()
-  d:add(nn.SpatialMaxPooling(3, 3, 1, 1, 1, 1))
-  local d_pool_proj = nn.SpatialConvolution(inplane, outplane_pool_proj, 1, 1, 1, 1, 0, 0)
-  d_pool_proj.name = name .. '/pool_proj'
-  bnd_pool_proj = nn.SpatialBatchNormalization(outplane_pool_proj)
-  bnd_pool_proj.name = name .. '/pool_proj_bn'
-  d:add(d_pool_proj):add(bnd_pool_proj)
-  d:add(nn.ReLU(true))
-
-  local module = nn.Sequential():add(nn.ConcatTable():add(a):add(b):add(c):add(d)):add(nn.JoinTable(2))
+  if type(outplane_a1x1) == int:
+    local module = nn.Sequential():add(nn.ConcatTable():add(a):add(b):add(c):add(d)):add(nn.JoinTable(2))
+  else:
+    local module = nn.Sequential():add(nn.ConcatTable():add(b):add(c):add(d)):add(nn.JoinTable(2))
   return module
 end
 
@@ -193,18 +108,16 @@ model:add(nn.SpatialMaxPooling(3, 3, 2, 2):ceil())
 
 model:add(InceptionModule('inception_3a', 192, 64, 64, 64, 64, 96, 96, 32))
 model:add(InceptionModule('inception_3b', 256, 64, 64, 96, 64, 96, 96, 64))
-model:add(InceptionModule1('inception_3c', 320, 128, 160, 64, 96, 96))
-
+model:add(InceptionModule('inception_3c', 320, '', 128, 160, 64, 96, 96, ''))
 
 model:add(InceptionModule('inception_4a', 576, 224, 64, 96, 96, 128, 128, 128))
 model:add(InceptionModule('inception_4b', 576, 192, 96, 128, 96, 128, 128, 128))
 model:add(InceptionModule('inception_4c', 576, 160, 128, 160, 128, 160, 160, 128))
 model:add(InceptionModule('inception_4d', 608, 96, 128, 192, 160, 192, 192, 128))
-model:add(InceptionModule1('inception_4e', 608, 128, 192, 192, 256, 256))
-
+model:add(InceptionModule('inception_4e', 608, '', 128, 192, 192, 256, 256, ''))
 
 model:add(InceptionModule('inception_5a', 1056, 352, 192, 320, 160, 224, 224, 128))
-model:add(InceptionModule2('inception_5b', 1024, 352, 192, 320, 192, 224, 224, 128))
+model:add(InceptionModule('inception_5b', 1024, 352, 192, 320, 192, 224, 224, 128))
 
 model:add(nn.SpatialAveragePooling(7, 7, 1, 1))
 drop = nn.Dropout(0.8)
