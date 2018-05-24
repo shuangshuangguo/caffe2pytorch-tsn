@@ -3,9 +3,9 @@ require 'inn'
 require 'hdf5'
 require 'nn'
 function InceptionModule(name, inplane, outplane_a1x1, outplane_b3x3_reduce, outplane_b3x3, outplanedouble_3x3_reduce, outplanedouble_3x3_1, outplanedouble_3x3_2, outplane_pool_proj)
-  if type(outplane_a1x1) == number then
-    local a = nn.Sequential()
-    local a1x1 = nn.SpatialConvolution(inplane, outplane_a1x1, 1, 1, 1, 1, 0, 0)
+  if type(outplane_a1x1) == 'number' then
+    a = nn.Sequential()
+    a1x1 = nn.SpatialConvolution(inplane, outplane_a1x1, 1, 1, 1, 1, 0, 0)
     a1x1.name = name .. '_1x1'
     bn1x1 = nn.SpatialBatchNormalization(outplane_a1x1)
     bn1x1.name = name .. '_1x1_bn'
@@ -13,35 +13,35 @@ function InceptionModule(name, inplane, outplane_a1x1, outplane_b3x3_reduce, out
     a:add(nn.ReLU(true))
   end
 
-  local b = nn.Sequential()
-  local b3x3_reduce = nn.SpatialConvolution(inplane, outplane_b3x3_reduce, 1, 1, 1, 1, 0, 0)
+  b = nn.Sequential()
+  b3x3_reduce = nn.SpatialConvolution(inplane, outplane_b3x3_reduce, 1, 1, 1, 1, 0, 0)
   b3x3_reduce.name = name .. '_3x3_reduce'
   bn3x3_reduce = nn.SpatialBatchNormalization(outplane_b3x3_reduce)
   bn3x3_reduce.name = name .. '_3x3_reduce_bn'
   b:add(b3x3_reduce):add(bn3x3_reduce)
   b:add(nn.ReLU(true))
-  local b3x3 = nn.SpatialConvolution(outplane_b3x3_reduce, outplane_b3x3, 3, 3, 1, 1, 1, 1)
+  b3x3 = nn.SpatialConvolution(outplane_b3x3_reduce, outplane_b3x3, 3, 3, 1, 1, 1, 1)
   b3x3.name = name .. '_3x3'
   bn3x3 = nn.SpatialBatchNormalization(outplane_b3x3)
   bn3x3.name = name .. '_3x3_bn'
   b:add(b3x3):add(bn3x3)
   b:add(nn.ReLU(true))
 
-  local c = nn.Sequential()
-  local double_3x3_reduce = nn.SpatialConvolution(inplane, outplanedouble_3x3_reduce, 1, 1, 1, 1, 0, 0)
+  c = nn.Sequential()
+  double_3x3_reduce = nn.SpatialConvolution(inplane, outplanedouble_3x3_reduce, 1, 1, 1, 1, 0, 0)
   double_3x3_reduce.name = name .. '_double_3x3_reduce'
   bndouble_3x3_reduce = nn.SpatialBatchNormalization(outplanedouble_3x3_reduce)
   bndouble_3x3_reduce.name = name .. '_double_3x3_reduce_bn'
   c:add(double_3x3_reduce):add(bndouble_3x3_reduce)
   c:add(nn.ReLU(true))
-  local double_3x3_1 = nn.SpatialConvolution(outplanedouble_3x3_reduce, outplanedouble_3x3_1, 3, 3, 1, 1, 1, 1)
+  double_3x3_1 = nn.SpatialConvolution(outplanedouble_3x3_reduce, outplanedouble_3x3_1, 3, 3, 1, 1, 1, 1)
   double_3x3_1.name = name .. '_double_3x3_1'
   bndouble_3x3_1 = nn.SpatialBatchNormalization(outplanedouble_3x3_1)
   bndouble_3x3_1.name = name .. '_double_3x3_1_bn'
   c:add(double_3x3_1):add(bndouble_3x3_1)
   c:add(nn.ReLU(true))
 
-  local double_3x3_2 = nn.SpatialConvolution(outplanedouble_3x3_1, outplanedouble_3x3_2, 3, 3, 1, 1, 1, 1)
+  double_3x3_2 = nn.SpatialConvolution(outplanedouble_3x3_1, outplanedouble_3x3_2, 3, 3, 1, 1, 1, 1)
   double_3x3_2.name = name .. '_double_3x3_2'
   bndouble_3x3_2 = nn.SpatialBatchNormalization(outplanedouble_3x3_2)
   bndouble_3x3_2.name = name .. '_double_3x3_2_bn'
@@ -49,16 +49,16 @@ function InceptionModule(name, inplane, outplane_a1x1, outplane_b3x3_reduce, out
   c:add(nn.ReLU(true))
 
 
-  local d = nn.Sequential()
-  if name == 'inception_4e' or 'inception_3c' then
+  d = nn.Sequential()
+  if name == 'inception_4e' or name == 'inception_3c' then
     d:add(nn.SpatialMaxPooling(3, 3, 2, 2))
-  else
-    if name == 'inception_5b' then
+  elseif name == 'inception_5b' then
       d:add(nn.SpatialMaxPooling(3, 3, 1, 1, 1, 1))
-    else
+  else
       d:add(nn.SpatialAveragePooling(3, 3, 1, 1, 1, 1))
-    end
-    local d_pool_proj = nn.SpatialConvolution(inplane, outplane_pool_proj, 1, 1, 1, 1, 0, 0)
+  end
+  if name ~= 'inception_4e' and name ~= 'inception_3c' then
+    d_pool_proj = nn.SpatialConvolution(inplane, outplane_pool_proj, 1, 1, 1, 1, 0, 0)
     d_pool_proj.name = name .. '_pool_proj'
     bnd_pool_proj = nn.SpatialBatchNormalization(outplane_pool_proj)
     bnd_pool_proj.name = name .. '_pool_proj_bn'
@@ -66,14 +66,14 @@ function InceptionModule(name, inplane, outplane_a1x1, outplane_b3x3_reduce, out
     d:add(nn.ReLU(true))
   end
 
-  if type(outplane_a1x1) == number then
-    local module = nn.Sequential():add(nn.ConcatTable():add(a):add(b):add(c):add(d)):add(nn.JoinTable(2))
-  elseif type(outplane_a1x1) == string then
-    local module = nn.Sequential():add(nn.ConcatTable():add(b):add(c):add(d)):add(nn.JoinTable(2))
+  if type(outplane_a1x1) == 'number' then
+    net = nn.Sequential():add(nn.ConcatTable():add(a):add(b):add(c):add(d)):add(nn.JoinTable(2))
+  elseif type(outplane_a1x1) == 'string' then
+    net = nn.Sequential():add(nn.ConcatTable():add(b):add(c):add(d)):add(nn.JoinTable(2))
   else
-    print('unexpected type of outplane_a1x1')
+    print('unexpected type of outplane_a1x1', type(outplane_a1x1))
   end
-  return module
+  return net
 end
 
 for k,v in ipairs(arg) do
@@ -95,6 +95,7 @@ bnconv1_7x7_s2.name = 'conv1_7x7_s2_bn'
 model:add(conv1_7x7_s2):add(bnconv1_7x7_s2)
 model:add(nn.ReLU(true))
 model:add(nn.SpatialMaxPooling(3, 3, 2, 2):ceil())
+--model:add(inn.SpatialCrossResponseNormalization(5, 0.0001, 0.75, 1))
 
 local conv_3x3_reduce = nn.SpatialConvolution(64, 64, 1, 1, 1, 1, 0, 0)
 conv_3x3_reduce.name = 'conv2_3x3_reduce'
@@ -108,6 +109,7 @@ bnconv_3x3 = nn.SpatialBatchNormalization(192)
 bnconv_3x3.name = 'conv2_3x3_bn'
 model:add(conv_3x3):add(bnconv_3x3)
 model:add(nn.ReLU(true))
+--model:add(inn.SpatialCrossResponseNormalization(5, 0.0001, 0.75, 1))
 model:add(nn.SpatialMaxPooling(3, 3, 2, 2):ceil())
 
 model:add(InceptionModule('inception_3a', 192, 64, 64, 64, 64, 96, 96, 32))
