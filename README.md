@@ -2,7 +2,7 @@
 
 #### This project transfers tsn-caffe model to tan-pytorch model. 
 
-##### The model dir saves my transferred model. I test them on UCF101 and HMDB51 dataset, and get comparrable results with the paper.
+##### The model dir saves my transferred model. I test them on UCF101 and HMDB51 dataset, and get comparable results with the paper.
 
 ##### This project has three steps
 
