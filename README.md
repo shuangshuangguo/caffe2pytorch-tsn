@@ -1,13 +1,18 @@
-# caffe2pytorch-tsn
+TSN model - Caffe2pytorch 
 
-This scipt first gets .hdf5file from caffemodel in python, 
-then use this .hdf5 file to get torch model in lua, 
-finally we transfer torch model to pytorch model in python.
+This project transfers tsn-caffe model to tan-pytorch model. 
 
-(Maybe you can use 'load_lua' and 'torch.save' directly in pytorch, but you can find that there will be error when you use this pytorchmodel on test_videos.py.)
+The model dir saves my transferred model. I test them on UCF101 and HMDB51 dataset, and get comparrable results with the paper.
 
-To be honest, this script is so complicated. I'm looking forward to see yjxiong's transferring work.
+This project has three steps
 
-You also need to modify test_videos.py because of the problem of state_dict, please see details in test_videos.py
+- first get .hdf5file from caffemodel in python
+- then use the .hdf5 file to get torch model in lua
+- finally transfer torch model to pytorch model in python.
 
-reference: https://github.com/kmatzen/googlenet-caffe2torch
+Something to be noticed:
+
+- You also need to modify test_videos.py because of the problem of state_dict, please see details in test_videos.py
+
+
+
