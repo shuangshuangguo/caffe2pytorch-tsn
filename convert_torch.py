@@ -132,6 +132,7 @@ def torch_to_pytorch(t7_filename,outputname=None):
     model.gradInput = None
     n = nn.Sequential()
     lua_recursive_model(model,n)
+    print (n.state_dict().keys())
     torch.save(n.state_dict(),outputname)
 
 if __name__ == '__main__':

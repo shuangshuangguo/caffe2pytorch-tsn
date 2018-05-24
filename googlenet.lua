@@ -3,7 +3,7 @@ require 'inn'
 require 'hdf5'
 require 'nn'
 function InceptionModule(name, inplane, outplane_a1x1, outplane_b3x3_reduce, outplane_b3x3, outplanedouble_3x3_reduce, outplanedouble_3x3_1, outplanedouble_3x3_2, outplane_pool_proj)
-  if type(outplane_a1x1) == int:
+  if type(outplane_a1x1) == number then
     local a = nn.Sequential()
     local a1x1 = nn.SpatialConvolution(inplane, outplane_a1x1, 1, 1, 1, 1, 0, 0)
     a1x1.name = name .. '/1x1'
@@ -11,6 +11,7 @@ function InceptionModule(name, inplane, outplane_a1x1, outplane_b3x3_reduce, out
     bn1x1.name = name .. '/1x1_bn'
     a:add(a1x1):add(bn1x1)
     a:add(nn.ReLU(true))
+  end
 
   local b = nn.Sequential()
   local b3x3_reduce = nn.SpatialConvolution(inplane, outplane_b3x3_reduce, 1, 1, 1, 1, 0, 0)
@@ -49,24 +50,29 @@ function InceptionModule(name, inplane, outplane_a1x1, outplane_b3x3_reduce, out
 
 
   local d = nn.Sequential()
-  if name == 'inception_4e' or 'inception_3c':
+  if name == 'inception_4e' or 'inception_3c' then
     d:add(nn.SpatialMaxPooling(3, 3, 2, 2))
-  else:
-    if name == 'inception_5b':
+  else
+    if name == 'inception_5b' then
       d:add(nn.SpatialMaxPooling(3, 3, 1, 1, 1, 1))
-    else:
+    else
       d:add(nn.SpatialAveragePooling(3, 3, 1, 1, 1, 1))
+    end
     local d_pool_proj = nn.SpatialConvolution(inplane, outplane_pool_proj, 1, 1, 1, 1, 0, 0)
     d_pool_proj.name = name .. '/pool_proj'
     bnd_pool_proj = nn.SpatialBatchNormalization(outplane_pool_proj)
     bnd_pool_proj.name = name .. '/pool_proj_bn'
     d:add(d_pool_proj):add(bnd_pool_proj)
     d:add(nn.ReLU(true))
+  end
 
-  if type(outplane_a1x1) == int:
+  if type(outplane_a1x1) == number then
     local module = nn.Sequential():add(nn.ConcatTable():add(a):add(b):add(c):add(d)):add(nn.JoinTable(2))
-  else:
+  elseif type(outplane_a1x1) == string then
     local module = nn.Sequential():add(nn.ConcatTable():add(b):add(c):add(d)):add(nn.JoinTable(2))
+  else
+    print('unexpected type of outplane_a1x1')
+  end
   return module
 end
 
@@ -124,11 +130,17 @@ drop = nn.Dropout(0.8)
 drop.name = 'dropout'
 model:add(drop)
 model:add(nn.View(-1, 1024))
+
 if dataset=='ucf101' then
   classifier = nn.Linear(1024, 101)
-else
+elseif dataset == 'hmdb51' then
   classifier = nn.Linear(1024, 51)
+elseif dataset == 'kinetics' then
+  classifier = nn.Linear(1024, 400)
+else
+  print('unknown dataset')
 end
+
 classifier.name = 'fc-action'
 model:add(classifier)
 
