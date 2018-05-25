@@ -62,6 +62,9 @@ for k, v in checkpoint.items():
         base_dict.setdefault(k, checkpoint[k])
 base_dict.setdefault('new_fc.weight', checkpoint['base_model.fc-action.1.weight'])
 base_dict.setdefault('new_fc.bias', checkpoint['base_model.fc-action.1.bias'])
+# For kinetics dataset:
+# base_dict.setdefault('new_fc.weight', checkpoint['base_model.fc_action.1.weight'])
+# base_dict.setdefault('new_fc.bias', checkpoint['base_model.fc_action.1.bias'])
 
 #print("model epoch {} best prec@1: {}".format(checkpoint['epoch'], checkpoint['best_prec1']))
 
